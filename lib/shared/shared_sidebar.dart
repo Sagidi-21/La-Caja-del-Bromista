@@ -18,6 +18,7 @@ class SharedSidebar extends StatelessWidget {
       {'icon': Icons.timer,     'label': 'TEMPORIZADOR', 'index': 1},
       {'icon': Icons.toys,      'label': 'LÁTIGO', 'index': 2},
       {'icon': Icons.cyclone,   'label': 'CAOS', 'index': 3},
+      {'icon': Icons.mic,       'label': 'GRABACIÓN', 'index': 4},
     ];
 
     return Drawer(

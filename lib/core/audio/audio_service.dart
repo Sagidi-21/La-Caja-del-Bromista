@@ -51,8 +51,25 @@ class AudioService {
     }
   }
 
+  /// Reproduce un archivo desde una ruta local (para grabaciones).
+  static Future<void> playFromFile(String filePath) async {
+    final player = AudioPlayer();
+    await player.play(DeviceFileSource(filePath));
+    player.onPlayerComplete.listen((_) => player.dispose());
+  }
+
+  /// Reproduce un sonido detectando si es asset o archivo local.
+  static Future<void> playSmart(String source) async {
+    if (source.contains('/') || source.contains('\\')) {
+      await playFromFile(source);
+    } else {
+      await play(source);
+    }
+  }
+
   /// Para uso en timers (sonido programado con delay).
-  static void playWithDelay(String soundName, int seconds) {
-    Timer(Duration(seconds: seconds), () => play(soundName));
+  static void playWithDelay(String source, int seconds) {
+    Timer(Duration(seconds: seconds), () => playSmart(source));
   }
 }
+

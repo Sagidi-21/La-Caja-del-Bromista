@@ -1,81 +1,24 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
+import 'joke_detail_screen.dart';
 
-class JokeSelectionScreen extends StatefulWidget {
+class JokeSelectionScreen extends StatelessWidget {
   const JokeSelectionScreen({super.key});
 
-  @override
-  State<JokeSelectionScreen> createState() => _JokeSelectionScreenState();
-}
-
-class _JokeSelectionScreenState extends State<JokeSelectionScreen> {
-  final Map<String, bool> _pressed = {};
-
-  void _selectJoke(String label, int soundIndex, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: color,
-        content: Text("PREPARANDO: $label", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        duration: const Duration(milliseconds: 1000),
+  Future<void> _onJokeSelected(BuildContext context, String category, Color themeColor) async {
+    final String? selectedSound = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => JokeDetailScreen(
+          category: category,
+          themeColor: themeColor,
+        ),
       ),
     );
-    // Esperamos un momento para que se vea la animación y el snackbar antes de volver
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) Navigator.pop(context, soundIndex);
-    });
-  }
 
-  Widget _buildCajaButton(String assetNormal, String assetIntensa, String label, Color color, int soundIndex) {
-    final bool isPressed = _pressed[label] ?? false;
-    final String currentAsset = isPressed
-        ? 'assets/images/$assetIntensa'
-        : 'assets/images/$assetNormal';
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 24, // Letra más grande
-            fontWeight: FontWeight.w900,
-            color: color,
-            letterSpacing: 1.2,
-            shadows: [
-              Shadow(color: Colors.black, offset: const Offset(2, 2), blurRadius: 4),
-              Shadow(color: color.withOpacity(0.5), blurRadius: 10),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        GestureDetector(
-          onTapDown: (_) => setState(() => _pressed[label] = true),
-          onTapUp: (_) {
-            setState(() => _pressed[label] = false);
-            _selectJoke(label, soundIndex, color);
-          },
-          onTapCancel: () => setState(() => _pressed[label] = false),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 100),
-            child: SizedBox(
-              key: ValueKey(currentAsset),
-              width: isPressed ? 130 : 120, // Iconos más grandes
-              height: isPressed ? 130 : 120,
-              child: Image.asset(
-                currentAsset,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 120, height: 120,
-                  color: color.withOpacity(0.3),
-                  child: Center(child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 10))),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+    if (selectedSound != null && context.mounted) {
+      Navigator.pop(context, selectedSound);
+    }
   }
 
   @override
@@ -84,14 +27,15 @@ class _JokeSelectionScreenState extends State<JokeSelectionScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // FONDO DEL GATO PENSATIVO
+          // Fondo
           Positioned.fill(
             child: Image.asset(
-              'assets/images/Gato_pensativo.jpeg',
+              'assets/images/gato_bufon.png',
               fit: BoxFit.cover,
             ),
           ),
-          // OVERLAY DEGRADADO
+          
+          // Overlay gradiente
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -99,70 +43,93 @@ class _JokeSelectionScreenState extends State<JokeSelectionScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.6),
-                    Colors.black.withOpacity(0.2),
                     Colors.black.withOpacity(0.8),
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.9),
                   ],
                 ),
               ),
             ),
           ),
+
           SafeArea(
-            child: Stack(
+            child: Column(
               children: [
-                // BOTÓN DE ATRÁS
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 28),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                // TÍTULO
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 25, left: 50, right: 20),
-                    child: Text(
-                      "SELECCIONA TU BROMA",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: MediaQuery.of(context).size.width * 0.08,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFFFF00FF),
-                        fontStyle: FontStyle.italic,
-                        letterSpacing: -1,
-                        shadows: [
-                          Shadow(color: Colors.black.withOpacity(0.8), offset: const Offset(4, 4), blurRadius: 10),
-                          const Shadow(color: Color(0xFFFF00FF), blurRadius: 20),
-                        ],
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
                       ),
-                    ),
+                      const Text(
+                        "LA CAJA",
+                        style: TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(width: 48), // Balance para el botón back
+                    ],
                   ),
                 ),
-                // CAJAS DE SELECCIÓN
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 40, right: 20, left: 60),
-                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white12, width: 1),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+
+                const Text(
+                  "ELIGE TU BROMO",
+                  style: TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white54,
+                    letterSpacing: 4,
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // Grid de Cajas
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: GridView.count(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 20,
                       children: [
-                        _buildCajaButton('Caja_roja_normal.png', 'Caja_roja_intensa.png', 'PEDOS', Colors.redAccent, 1), // fart.mp3
-                        const SizedBox(height: 20),
-                        _buildCajaButton('Caja_azul_normal.png', 'Caja_azul_intensa.png', 'CRISTALES', Colors.blueAccent, 0), // boom.mp3
-                        const SizedBox(height: 20),
-                        _buildCajaButton('Caja_oro_normal.png', 'Caja_oro_intensa.png', 'GRITOS', Colors.amber, 3), // clap.mp3
-                        const SizedBox(height: 20),
-                        _buildCajaButton('Caja_morada_normal.png', 'Caja_morada_intensa.png', 'GOLPES', Colors.purpleAccent, 2), // whip.mp3
+                        _buildJokeBox(
+                          context: context,
+                          title: "PEDOS",
+                          color: const Color(0xFFFF3D00), // Naranja neón
+                          icon: Icons.air,
+                          onTap: () => _onJokeSelected(context, "PEDOS", const Color(0xFFFF3D00)),
+                        ),
+                        _buildJokeBox(
+                          context: context,
+                          title: "CRISTALES",
+                          color: const Color(0xFF00E5FF), // Cyan neón
+                          icon: Icons.flare,
+                          onTap: () => _onJokeSelected(context, "CRISTALES", const Color(0xFF00E5FF)),
+                        ),
+                        _buildJokeBox(
+                          context: context,
+                          title: "GRITOS",
+                          color: const Color(0xFFFFD600), // Oro neón
+                          icon: Icons.record_voice_over,
+                          onTap: () => _onJokeSelected(context, "GRITOS", const Color(0xFFFFD600)),
+                        ),
+                        _buildJokeBox(
+                          context: context,
+                          title: "GOLPES",
+                          color: const Color(0xFFAA00FF), // Púrpura neón
+                          icon: Icons.gavel,
+                          onTap: () => _onJokeSelected(context, "GOLPES", const Color(0xFFAA00FF)),
+                        ),
                       ],
                     ),
                   ),
@@ -171,6 +138,62 @@ class _JokeSelectionScreenState extends State<JokeSelectionScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildJokeBox({
+    required BuildContext context,
+    required String title,
+    required Color color,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: color.withOpacity(0.5),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.2),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 48,
+                  color: color,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

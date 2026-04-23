@@ -68,7 +68,7 @@ class _TimerScreenState extends State<TimerScreen> {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_remainingSeconds <= 1) {
         t.cancel();
-        AudioService.play(_sounds[_selectedSound]['file']!);
+        AudioService.playSmart(_selectedSoundPath);
         setState(() {
           _isRunning = false;
           _remainingSeconds = _delaySeconds;
@@ -78,6 +78,7 @@ class _TimerScreenState extends State<TimerScreen> {
       }
     });
   }
+
 
   void _showSoundPicker(BuildContext context) {
     showModalBottomSheet(
@@ -226,15 +227,15 @@ class _TimerScreenState extends State<TimerScreen> {
                         const SizedBox(height: 4),
                         // ── BOTÓN SELECCIONA TU BROMA (IMAGEN) ──
                         GestureDetector(
-                          onTap: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const JokeSelectionScreen()),
-                            );
-                            if (result != null && result is int) {
-                              setState(() => _selectedSound = result);
-                            }
-                          },
+                            onTap: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const JokeSelectionScreen()),
+                              );
+                              if (result != null && result is String) {
+                                setState(() => _selectedSoundPath = result);
+                              }
+                            },
                           child: Image.asset(
                             'assets/images/Elige_tu_broma.png',
                             width: 250, // Ajusta el tamaño de la imagen según necesites
@@ -290,27 +291,28 @@ class _TimerScreenState extends State<TimerScreen> {
                     ),
                   ),
 
-                // ── BOTÓN "PRESIONA PARA ARMAR" EN LA PARTE INFERIOR ──
-                if (!_isRunning)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: GestureDetector(
-                        onTap: _setTrap,
-                        child: Image.asset(
-                          'assets/images/Presiona_para_Armar.png',
-                          width: 280, 
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
+
+          // ── BOTÓN "PRESIONA PARA ARMAR" EN LA PARTE INFERIOR (Fuera de SafeArea para bajarlo más) ──
+          if (!_isRunning)
+            Positioned(
+              bottom: 12, // Situado para tapar la banda morada del fondo
+              left: 0,
+              right: 0,
+              child: Center(
+                child: GestureDetector(
+                  onTap: _setTrap,
+                  child: Image.asset(
+                    'assets/images/Presiona_para_Armar.png',
+                    width: 280, 
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            ),
 
           // Pantalla de Apagón
           if (_stealthMode && _isRunning)
@@ -348,6 +350,28 @@ class _TimerScreenState extends State<TimerScreen> {
                 child: const Center(child: Text("Dinamita.png no encontrada", style: TextStyle(color: Colors.white))),
               ),
             ),
+
+            // ── BOTONES DE AJUSTE DE TIEMPO ──
+            if (!_isRunning) ...[
+              Positioned(
+                left: -w * 0.05,
+                bottom: w * 0.12,
+                child: _buildTimeAdjButton(
+                  icon: Icons.remove,
+                  onTap: _decrement,
+                  size: w * 0.18,
+                ),
+              ),
+              Positioned(
+                right: -w * 0.05,
+                bottom: w * 0.12,
+                child: _buildTimeAdjButton(
+                  icon: Icons.add,
+                  onTap: _increment,
+                  size: w * 0.18,
+                ),
+              ),
+            ],
 
             // ── PANTALLA DIGITAL SUPERPUESTA ──
             Positioned(
