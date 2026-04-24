@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/audio/audio_service.dart';
 import 'joke_selection_screen.dart';
+import 'jumpscare_screen.dart';
+import '../trojan/trojan_screen.dart';
 
 class TimerScreen extends StatefulWidget {
   const TimerScreen({super.key});
@@ -11,12 +13,29 @@ class TimerScreen extends StatefulWidget {
   State<TimerScreen> createState() => _TimerScreenState();
 }
 
-class _TimerScreenState extends State<TimerScreen> {
-  int _delaySeconds = 45;
-  int _remainingSeconds = 45;
+class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStateMixin {
+  int _delaySeconds = 10;
+  int _remainingSeconds = 10;
   bool _isRunning = false;
   bool _stealthMode = false;
   Timer? _countdownTimer;
+
+  bool _hasBeenScared = false;
+  late AnimationController _arrowController;
+  late Animation<double> _arrowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _arrowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+    _arrowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+      parent: _arrowController,
+      curve: Curves.easeOut,
+    ));
+  }
 
   static const List<Map<String, dynamic>> _sounds = [
     {'label': 'Bocina Explosiva', 'file': 'boom.mp3', 'icon': Icons.campaign},
@@ -35,6 +54,9 @@ class _TimerScreenState extends State<TimerScreen> {
     {'label': 'Momento Bruh', 'file': 'bruh.mp3', 'icon': Icons.sentiment_very_satisfied},
   ];
   int _selectedSound = 0;
+  String? _selectedSoundPath;
+  String _selectedSoundLabel = 'SIN BROMA ACTIVADA';
+  Color _selectedSoundColor = const Color(0xFF666666); // Gris por defecto
 
   void _increment() {
     if (_isRunning) return;
@@ -52,7 +74,22 @@ class _TimerScreenState extends State<TimerScreen> {
     });
   }
 
-  void _setTrap() {
+  void _toggleTimer() async {
+    if (_selectedSoundPath == null) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const JumpscareScreen()),
+      );
+      if (mounted) {
+        setState(() {
+          _hasBeenScared = true;
+        });
+      }
+      return;
+    }
+    
+    if (_remainingSeconds == 0) return;
+    
     if (_isRunning) {
       _countdownTimer?.cancel();
       setState(() {
@@ -61,6 +98,7 @@ class _TimerScreenState extends State<TimerScreen> {
       });
       return;
     }
+
     setState(() {
       _isRunning = true;
       _remainingSeconds = _delaySeconds;
@@ -68,7 +106,7 @@ class _TimerScreenState extends State<TimerScreen> {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_remainingSeconds <= 1) {
         t.cancel();
-        AudioService.playSmart(_selectedSoundPath);
+        AudioService.playSmart(_selectedSoundPath!);
         setState(() {
           _isRunning = false;
           _remainingSeconds = _delaySeconds;
@@ -120,7 +158,10 @@ class _TimerScreenState extends State<TimerScreen> {
                   final isSel = _selectedSound == index;
                   return GestureDetector(
                     onTap: () {
-                      setState(() => _selectedSound = index);
+                      setState(() {
+                        _selectedSound = index;
+                        _selectedSoundPath = _sounds[index]['file'];
+                      });
                       Navigator.pop(context);
                     },
                     child: Container(
@@ -162,6 +203,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
   @override
   void dispose() {
+    _arrowController.dispose();
     _countdownTimer?.cancel();
     super.dispose();
   }
@@ -201,55 +243,108 @@ class _TimerScreenState extends State<TimerScreen> {
             child: Stack(
               children: [
                 // ── TÍTULO GIGANTE CENTRADO Y BOTÓN ──
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 25, left: 20, right: 20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "TEMPORIZADOR DE LA RISA",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: MediaQuery.of(context).size.width * 0.08,
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFFFF00FF),
-                            fontStyle: FontStyle.italic,
-                            letterSpacing: -2,
-                            shadows: [
-                              Shadow(color: Colors.black.withOpacity(0.8), offset: const Offset(4, 4), blurRadius: 10),
-                              const Shadow(color: Color(0xFFFF00FF), blurRadius: 20),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        // ── BOTÓN SELECCIONA TU BROMA (IMAGEN) ──
-                        GestureDetector(
-                            onTap: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const JokeSelectionScreen()),
-                              );
-                              if (result != null && result is String) {
-                                setState(() => _selectedSoundPath = result);
-                              }
-                            },
-                          child: Image.asset(
-                            'assets/images/Elige_tu_broma.png',
-                            width: 250, // Ajusta el tamaño de la imagen según necesites
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) => const Text(
-                              "Imagen no encontrada",
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ),
-                      ],
+                // ── TÍTULO GIGANTE CENTRADO ──
+                Positioned(
+                  top: -35,
+                  left: 5,
+                  right: 5,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/Titulo.png',
+                      width: MediaQuery.of(context).size.width * 0.90,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => const Text(
+                        "TEMPORIZADOR DE LA RISA",
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ),
                   ),
                 ),
+
+                // ── BOTÓN ACCESO HACKER LAB ──
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: IconButton(
+                    icon: const Icon(Icons.bug_report, color: Colors.greenAccent, size: 35),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TrojanScreen()),
+                      );
+                    },
+                  ),
+                ),
+
+                // ── BOTÓN SELECCIONA TU BROMA (INDEPENDIENTE) ──
+                Positioned(
+                  top: 70,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: GestureDetector(
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const JokeSelectionScreen()),
+                          );
+                          if (result != null && result is Map) {
+                            setState(() {
+                              _hasBeenScared = false;
+                              _selectedSoundPath = result['path'] as String;
+                              _selectedSoundLabel = result['label'] as String;
+                              if (result.containsKey('color')) {
+                                _selectedSoundColor = Color(result['color'] as int);
+                              }
+                            });
+                          }
+                        },
+                      child: Image.asset(
+                        'assets/images/Elige_tu_broma.png',
+                        width: 250, 
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => const Text(
+                          "Imagen no encontrada",
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                if (_hasBeenScared && _selectedSoundPath == null)
+                  Positioned(
+                    top: 150, // Debajo de ELIGE TU BROMA
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: AnimatedBuilder(
+                        animation: _arrowAnimation,
+                        builder: (context, child) {
+                          // Traslación hacia arriba: de 40 a 0
+                          final dy = 40.0 * (1.0 - _arrowAnimation.value);
+                          // Opacidad: aparece suave, se mantiene y desaparece al final
+                          final opacity = _arrowAnimation.value < 0.2 
+                              ? _arrowAnimation.value * 5.0 
+                              : (_arrowAnimation.value > 0.8 ? (1.0 - _arrowAnimation.value) * 5.0 : 1.0);
+                          return Opacity(
+                            opacity: opacity.clamp(0.0, 1.0),
+                            child: Transform.translate(
+                              offset: Offset(0, dy),
+                              child: const Icon(
+                                Icons.arrow_upward_rounded,
+                                color: Color(0xFFFF00FF),
+                                size: 80,
+                                shadows: [
+                                  Shadow(color: Colors.black, blurRadius: 10, offset: Offset(2, 2))
+                                ]
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
 
                 Positioned(
                   bottom: 20,
@@ -257,7 +352,7 @@ class _TimerScreenState extends State<TimerScreen> {
                   right: 0,
                   child: Center(
                     child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.72,
+                      width: MediaQuery.of(context).size.width * 0.90,
                       child: _buildTimerBox(),
                     ),
                   ),
@@ -298,12 +393,12 @@ class _TimerScreenState extends State<TimerScreen> {
           // ── BOTÓN "PRESIONA PARA ARMAR" EN LA PARTE INFERIOR (Fuera de SafeArea para bajarlo más) ──
           if (!_isRunning)
             Positioned(
-              bottom: 12, // Situado para tapar la banda morada del fondo
+              bottom: -60, // Ajuste final solicitado
               left: 0,
               right: 0,
               child: Center(
                 child: GestureDetector(
-                  onTap: _setTrap,
+                  onTap: _toggleTimer,
                   child: Image.asset(
                     'assets/images/Presiona_para_Armar.png',
                     width: 280, 
@@ -330,10 +425,11 @@ class _TimerScreenState extends State<TimerScreen> {
   Widget _buildTimerBox() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final w = constraints.maxWidth; // 72% del ancho de pantalla
-        // Display de la dinamita: ~38% desde arriba, fuente ajustada al ancho del panel
+        final totalWidth = constraints.maxWidth;
+        final w = totalWidth * 0.8; // La dinamita mantiene su tamaño visual (0.9 * 0.8 = 0.72)
+        // Display de la dinamita: ~38% desde arriba
         final displayTop = w * 0.38;
-        final fontSize   = w * 0.12;   // Ligeramente más pequeño
+        final fontSize   = w * 0.12;
 
         return Stack(
           alignment: Alignment.center,
@@ -354,21 +450,21 @@ class _TimerScreenState extends State<TimerScreen> {
             // ── BOTONES DE AJUSTE DE TIEMPO ──
             if (!_isRunning) ...[
               Positioned(
-                left: -w * 0.05,
-                bottom: w * 0.12,
+                left: 0, // Pegado al borde izquierdo del contenedor de 90%
+                top: displayTop + (w * 0.02) + 5,
                 child: _buildTimeAdjButton(
                   icon: Icons.remove,
                   onTap: _decrement,
-                  size: w * 0.18,
+                  size: w * 0.16,
                 ),
               ),
               Positioned(
-                right: -w * 0.05,
-                bottom: w * 0.12,
+                right: 0, // Pegado al borde derecho del contenedor de 90%
+                top: displayTop + (w * 0.02) + 5,
                 child: _buildTimeAdjButton(
                   icon: Icons.add,
                   onTap: _increment,
-                  size: w * 0.18,
+                  size: w * 0.16,
                 ),
               ),
             ],
@@ -390,7 +486,32 @@ class _TimerScreenState extends State<TimerScreen> {
                     Shadow(color: Color(0xFFFFAA00), blurRadius: 30),
                   ],
                 ),
+                ),
               ),
+            ),
+            // ── ETIQUETA DE SONIDO ELEGIDO (SOBRE LA DINAMITA) ──
+            Positioned(
+              top: displayTop - (w * 0.15) - 30, // Subido 30 px total
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _selectedSoundColor, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(color: _selectedSoundColor.withOpacity(0.3), blurRadius: 10),
+                  ],
+                ),
+                child: Text(
+                  _selectedSoundLabel.toUpperCase(),
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: w * 0.045,
+                    fontWeight: FontWeight.w900,
+                    color: _selectedSoundColor,
+                    letterSpacing: 1.5,
+                  ),
+                ),
               ),
             ),
           ],
@@ -401,15 +522,21 @@ class _TimerScreenState extends State<TimerScreen> {
 
   Widget _buildTimeAdjButton({required IconData icon, required VoidCallback onTap, double size = 36}) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        // Feedback táctil/visual simple
+        onTap();
+      },
+      behavior: HitTestBehavior.opaque,
       child: Container(
-        width:  size,
+        width: size,
         height: size,
         decoration: BoxDecoration(
           color: const Color(0xFFFF9500),
           shape: BoxShape.circle,
           border: Border.all(color: Colors.black, width: 2),
-          boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(2, 2))],
+          boxShadow: const [
+            BoxShadow(color: Colors.black, offset: Offset(2, 2)),
+          ],
         ),
         child: Icon(icon, color: Colors.black, size: size * 0.55),
       ),

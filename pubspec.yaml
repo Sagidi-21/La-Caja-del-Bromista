@@ -19,6 +19,7 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.1
   permission_handler: ^12.0.1
+  video_player: ^2.11.1
 
 dev_dependencies:
   flutter_test:
@@ -30,3 +31,4 @@ flutter:
   assets:
     - assets/sounds/
     - assets/images/
+    - assets/videos/

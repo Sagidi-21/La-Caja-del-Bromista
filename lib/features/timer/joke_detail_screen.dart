@@ -96,19 +96,19 @@ class _JokeDetailScreenState extends State<JokeDetailScreen> {
   String _getBackgroundImage() {
     switch (widget.category) {
       case 'PEDOS': return 'assets/images/Gato_Pedo.png';
-      case 'CRISTALES': return 'assets/images/Gato_Cristales.png';
-      case 'GRITOS': return 'assets/images/Gato_Susto.png';
-      case 'GOLPES': return 'assets/images/Gato_Golpes.png';
-      default: return 'assets/images/gato_bufon.png';
+      case 'CRISTALES': return 'assets/images/Gato_Cristales.jpeg';
+      case 'GRITOS': return 'assets/images/Gato_Susto.jpeg';
+      case 'GOLPES': return 'assets/images/Gato_Golpes.jpeg';
+      default: return 'assets/images/Gato_pensativo.jpeg';
     }
   }
 
-  void _selectSound(String source, String label) {
+  void _playSound(String source) {
     AudioService.playSmart(source);
-    // Pequeño delay para que el usuario oiga el inicio del sonido antes de volver
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) Navigator.pop(context, source);
-    });
+  }
+
+  void _loadSound(String source, String label) {
+    if (mounted) Navigator.pop(context, {'path': source, 'label': label});
   }
 
   @override
@@ -168,7 +168,7 @@ class _JokeDetailScreenState extends State<JokeDetailScreen> {
                       Text(
                         widget.category,
                         style: TextStyle(
-                          fontFamily: 'SpaceGrotesk',
+                          fontFamily: 'Manrope',
                           fontSize: 32,
                           fontWeight: FontWeight.w900,
                           color: widget.themeColor,
@@ -182,18 +182,7 @@ class _JokeDetailScreenState extends State<JokeDetailScreen> {
                   ),
                 ),
 
-                const Text(
-                  "SELECCIONA TU ARMA",
-                  style: TextStyle(
-                    fontFamily: 'SpaceGrotesk',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white54,
-                    letterSpacing: 3,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
 
                 // Sounds List
                 Expanded(
@@ -203,44 +192,67 @@ class _JokeDetailScreenState extends State<JokeDetailScreen> {
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final s = sounds[index];
-                      return GestureDetector(
-                        onTap: () => _selectSound(s['file']!, s['label']!),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                            child: Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.white12, width: 1),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2), // Desenfoque reducido
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.01), // Casi transparente
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                            ),
+                            child: Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () => _playSound(s['file']!),
+                                  child: Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: widget.themeColor.withOpacity(0.2),
+                                      color: widget.themeColor.withOpacity(0.6), // Más opaco para resaltar
                                       shape: BoxShape.circle,
                                     ),
-                                    child: Icon(Icons.play_arrow, color: widget.themeColor, size: 20),
+                                    child: const Icon(Icons.play_arrow, color: Colors.white, size: 20), // Icono en blanco para mejor contraste
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Text(
-                                      s['label']!,
-                                      style: const TextStyle(
-                                        fontFamily: 'SpaceGrotesk',
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Text(
+                                    s['label']!,
+                                    style: const TextStyle(
+                                      fontFamily: 'Manrope',
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => _loadSound(s['file']!, s['label']!),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: widget.themeColor.withOpacity(0.25),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: widget.themeColor.withOpacity(0.5),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "CARGAR",
+                                      style: TextStyle(
+                                        fontFamily: 'Manrope',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w900,
                                         color: Colors.white,
+                                        letterSpacing: 1.0,
                                       ),
                                     ),
                                   ),
-                                  const Icon(Icons.chevron_right, color: Colors.white24),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

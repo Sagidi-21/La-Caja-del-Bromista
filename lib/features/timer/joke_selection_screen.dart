@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'joke_detail_screen.dart';
 
-class JokeSelectionScreen extends StatelessWidget {
+class JokeSelectionScreen extends StatefulWidget {
   const JokeSelectionScreen({super.key});
 
+  @override
+  State<JokeSelectionScreen> createState() => _JokeSelectionScreenState();
+}
+
+class _JokeSelectionScreenState extends State<JokeSelectionScreen> {
+  // Para controlar qué caja se está presionando y mostrar la versión "intensa"
+  String? _pressingCategory;
+
   Future<void> _onJokeSelected(BuildContext context, String category, Color themeColor) async {
-    final String? selectedSound = await Navigator.push<String>(
+    final Map<String, String>? selectedSound = await Navigator.push<Map<String, String>>(
       context,
       MaterialPageRoute(
         builder: (context) => JokeDetailScreen(
@@ -17,7 +24,13 @@ class JokeSelectionScreen extends StatelessWidget {
     );
 
     if (selectedSound != null && context.mounted) {
-      Navigator.pop(context, selectedSound);
+      Navigator.pop(context, {
+        ...selectedSound,
+        'color': themeColor.value,
+      });
+    } else if (context.mounted) {
+      // Si vuelve atrás sin seleccionar, reseteamos la caja
+      setState(() => _pressingCategory = null);
     }
   }
 
@@ -27,15 +40,15 @@ class JokeSelectionScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Fondo
+          // ── FONDO: GATO PENSATIVO ──
           Positioned.fill(
             child: Image.asset(
-              'assets/images/gato_bufon.png',
+              'assets/images/Gato_pensativo.jpeg',
               fit: BoxFit.cover,
             ),
           ),
           
-          // Overlay gradiente
+          // Overlay para mejorar legibilidad
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -43,9 +56,9 @@ class JokeSelectionScreen extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
+                    Colors.black.withOpacity(0.7),
+                    Colors.black.withOpacity(0.3),
                     Colors.black.withOpacity(0.8),
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.9),
                   ],
                 ),
               ),
@@ -55,83 +68,64 @@ class JokeSelectionScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // Header
+                // ── HEADER CON TÍTULO PREMIUM ──
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      const Text(
-                        "LA CAJA",
-                        style: TextStyle(
-                          fontFamily: 'SpaceGrotesk',
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 2,
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 28),
+                          onPressed: () => Navigator.pop(context),
                         ),
                       ),
-                      const SizedBox(width: 48), // Balance para el botón back
+                      Image.asset(
+                        'assets/images/Caja.png',
+                        height: 200,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => const Text(
+                          "LA CAJA",
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
                     ],
                   ),
                 ),
 
-                const Text(
-                  "ELIGE TU BROMO",
-                  style: TextStyle(
-                    fontFamily: 'SpaceGrotesk',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white54,
-                    letterSpacing: 4,
-                  ),
-                ),
+                const SizedBox(height: 0),
 
-                const SizedBox(height: 40),
-
-                // Grid de Cajas
+                // ── LISTADO DE CAJAS ──
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 20,
-                      crossAxisSpacing: 20,
-                      children: [
-                        _buildJokeBox(
-                          context: context,
-                          title: "PEDOS",
-                          color: const Color(0xFFFF3D00), // Naranja neón
-                          icon: Icons.air,
-                          onTap: () => _onJokeSelected(context, "PEDOS", const Color(0xFFFF3D00)),
-                        ),
-                        _buildJokeBox(
-                          context: context,
-                          title: "CRISTALES",
-                          color: const Color(0xFF00E5FF), // Cyan neón
-                          icon: Icons.flare,
-                          onTap: () => _onJokeSelected(context, "CRISTALES", const Color(0xFF00E5FF)),
-                        ),
-                        _buildJokeBox(
-                          context: context,
-                          title: "GRITOS",
-                          color: const Color(0xFFFFD600), // Oro neón
-                          icon: Icons.record_voice_over,
-                          onTap: () => _onJokeSelected(context, "GRITOS", const Color(0xFFFFD600)),
-                        ),
-                        _buildJokeBox(
-                          context: context,
-                          title: "GOLPES",
-                          color: const Color(0xFFAA00FF), // Púrpura neón
-                          icon: Icons.gavel,
-                          onTap: () => _onJokeSelected(context, "GOLPES", const Color(0xFFAA00FF)),
-                        ),
-                      ],
-                    ),
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+                    children: [
+                      _buildCategoryRow(
+                        context,
+                        title: "PEDOS",
+                        colorName: "roja",
+                        themeColor: const Color(0xFFFF3D00),
+                      ),
+                      _buildCategoryRow(
+                        context,
+                        title: "CRISTALES",
+                        colorName: "azul",
+                        themeColor: const Color(0xFF00E5FF),
+                      ),
+                      _buildCategoryRow(
+                        context,
+                        title: "GRITOS",
+                        colorName: "oro",
+                        themeColor: const Color(0xFFFFD600),
+                      ),
+                      _buildCategoryRow(
+                        context,
+                        title: "GOLPES",
+                        colorName: "morada",
+                        themeColor: const Color(0xFFAA00FF),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -142,57 +136,73 @@ class JokeSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildJokeBox({
-    required BuildContext context,
+  Widget _buildCategoryRow(BuildContext context, {
     required String title,
-    required Color color,
-    required IconData icon,
-    required VoidCallback onTap,
+    required String colorName,
+    required Color themeColor,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: color.withOpacity(0.5),
-                width: 2,
+    final bool isPressing = _pressingCategory == title;
+    final String imagePath = isPressing 
+        ? 'assets/images/Caja_${colorName}_intensa.png' 
+        : 'assets/images/Caja_${colorName}_normal.png';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 25),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressingCategory = title),
+        onTapUp: (_) async {
+          // Esperamos el delay para que se vea el efecto, pero NO reseteamos aún
+          await Future.delayed(const Duration(milliseconds: 200));
+          if (mounted) {
+            _onJokeSelected(context, title, themeColor);
+          }
+        },
+        onTapCancel: () => setState(() => _pressingCategory = null),
+        child: Row(
+          children: [
+            // Imagen de la Caja con Animación de Escala
+            AnimatedScale(
+              scale: isPressing ? 1.1 : 1.0,
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutBack,
+              child: Image.asset(
+                imagePath,
+                width: 120,
+                height: 120,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 120, height: 120, color: Colors.grey[900],
+                  child: const Icon(Icons.inventory_2, color: Colors.white24),
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.2),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                ),
-              ],
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 48,
-                  color: color,
-                ),
-                const SizedBox(height: 12),
-                Text(
+            const SizedBox(width: 20),
+            // Nombre del Grupo
+            Expanded(
+              child: AnimatedScale(
+                scale: isPressing ? 1.1 : 1.0,
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOutBack,
+                child: Text(
                   title,
-                  style: const TextStyle(
-                    fontFamily: 'SpaceGrotesk',
-                    fontSize: 18,
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 28,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 1,
+                    color: themeColor, // Mantiene siempre su color original
+                    letterSpacing: 2,
+                    shadows: [
+                      Shadow(color: Colors.black, offset: const Offset(2, 2), blurRadius: 4),
+                      Shadow(
+                        color: themeColor.withOpacity(isPressing ? 0.9 : 0.5), 
+                        blurRadius: isPressing ? 25 : 10, // Resplandor intenso al pulsar
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
