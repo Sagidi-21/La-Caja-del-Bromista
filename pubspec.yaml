@@ -20,6 +20,7 @@ dependencies:
   path: ^1.9.1
   permission_handler: ^12.0.1
   video_player: ^2.11.1
+  url_launcher: ^6.2.4
 
 dev_dependencies:
   flutter_test:
@@ -32,3 +33,11 @@ flutter:
     - assets/sounds/
     - assets/images/
     - assets/videos/
+    - assets/videos/trampas/chicas/
+    - assets/videos/trampas/chicos/
+    - assets/images/trampas/
+    - assets/images/trampas/chicas/
+    - assets/images/trampas/chicos/
+    - assets/sounds/trampas/
+    - assets/sounds/trampas/chicas/
+    - assets/sounds/trampas/chicos/

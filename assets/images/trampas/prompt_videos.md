@@ -1,0 +1,1 @@
+Quiero simular una video llamada, así que la chica debe esperar 0,5 segundos sin decir nada solo moviendo la mano con gesto de saludo y luego empezar a hablar diciendo: Hola bombón, hace días que no hablamos, ¿no quieres repetir lo de la otra noche? Nos lo pasamos realmente bien, ¿verdad?. Podemos repetir esta noche si quieres y dejar una pausa de 1 segundo sin decir nada
