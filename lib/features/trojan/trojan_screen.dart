@@ -81,21 +81,29 @@ class _TrojanScreenState extends State<TrojanScreen> {
             child: Image.asset(
               'assets/images/Gato_informatico.png',
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: Colors.red.withOpacity(0.5),
-                child: const Center(
-                  child: Text(
-                    "Error cargando Gato_informatico.png",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
+              errorBuilder: (context, error, stackTrace) => Container(color: Colors.black),
             ),
           ),
           
+          // Capa muy sutil para no oscurecer el fondo
           Positioned.fill(
             child: Container(color: Colors.black.withOpacity(0.05)),
+          ),
+
+          // BOTÓN VOLVER (Sutil con círculo de contraste)
+          Positioned(
+            top: 20,
+            left: 10,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.4),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
           ),
 
           SafeArea(

@@ -48,7 +48,7 @@ class _JokeSelectionScreenState extends State<JokeSelectionScreen> {
             ),
           ),
           
-          // Overlay para mejorar legibilidad
+          // Overlay mucho más suave para iluminar la pantalla
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -56,9 +56,9 @@ class _JokeSelectionScreenState extends State<JokeSelectionScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.black.withOpacity(0.3),
-                    Colors.black.withOpacity(0.8),
+                    Colors.black.withOpacity(0.3), // Más claro arriba
+                    Colors.transparent,             // Limpio en el centro
+                    Colors.black.withOpacity(0.4), // Sutil abajo para legibilidad
                   ],
                 ),
               ),
@@ -177,27 +177,42 @@ class _JokeSelectionScreenState extends State<JokeSelectionScreen> {
               ),
             ),
             const SizedBox(width: 20),
-            // Nombre del Grupo
+            // Nombre del Grupo con "Cajita" de contraste
             Expanded(
-              child: AnimatedScale(
-                scale: isPressing ? 1.1 : 1.0,
-                duration: const Duration(milliseconds: 150),
-                curve: Curves.easeOutBack,
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: themeColor, // Mantiene siempre su color original
-                    letterSpacing: 2,
-                    shadows: [
-                      Shadow(color: Colors.black, offset: const Offset(2, 2), blurRadius: 4),
-                      Shadow(
-                        color: themeColor.withOpacity(isPressing ? 0.9 : 0.5), 
-                        blurRadius: isPressing ? 25 : 10, // Resplandor intenso al pulsar
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20), // <--- ESTO ES LO QUE BAJA EL TEXTO
+                child: AnimatedScale(
+                  scale: isPressing ? 1.1 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeOutBack,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: themeColor.withOpacity(0.3),
+                        width: 1.5,
                       ),
-                    ],
+                    ),
+                    child: Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: themeColor, 
+                        letterSpacing: 2,
+                        shadows: [
+                          Shadow(color: Colors.black, offset: const Offset(2, 2), blurRadius: 4),
+                          Shadow(
+                            color: themeColor.withOpacity(isPressing ? 0.9 : 0.5), 
+                            blurRadius: isPressing ? 25 : 10,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),

@@ -261,20 +261,7 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                   ),
                 ),
 
-                // ── BOTÓN ACCESO HACKER LAB ──
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: IconButton(
-                    icon: const Icon(Icons.bug_report, color: Colors.greenAccent, size: 35),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const TrojanScreen()),
-                      );
-                    },
-                  ),
-                ),
+                // ── BOTÓN SELECCIONA TU BROMA (INDEPENDIENTE) ──
 
                 // ── BOTÓN SELECCIONA TU BROMA (INDEPENDIENTE) ──
                 Positioned(
@@ -404,6 +391,46 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                     width: 280, 
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            ),
+
+          // ── BOTÓN ACCESO HACKER LAB (NUEVA POSICIÓN) ──
+          if (!_isRunning)
+            Positioned(
+              bottom: 12,
+              right: 8,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TrojanScreen()),
+                  );
+                },
+                child: Container(
+                  width: 60,  // <--- AJUSTA EL TAMAÑO AQUÍ (ANCHO)
+                  height: 60, // <--- AJUSTA EL TAMAÑO AQUÍ (ALTO)
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.greenAccent.withOpacity(0.3),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/hacker_lab_icon.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.security,
+                        color: Colors.greenAccent,
+                        size: 35,
+                      ),
+                    ),
                   ),
                 ),
               ),

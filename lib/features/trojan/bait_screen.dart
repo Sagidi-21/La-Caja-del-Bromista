@@ -23,31 +23,38 @@ class BaitScreen extends StatefulWidget {
 }
 
 class _BaitScreenState extends State<BaitScreen> {
-  late Timer _timer;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     // Iniciar el temporizador para la transición automática
     _timer = Timer(Duration(milliseconds: (widget.duration * 1000).toInt()), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => IncomingCallScreen(
-              callerName: widget.callerName,
-              avatarPath: widget.avatarPath,
-              videoPath: widget.videoPath,
-            ),
-          ),
-        );
-      }
+      _jumpToCall();
     });
+  }
+
+  void _jumpToCall() {
+    if (_timer != null && _timer!.isActive) {
+      _timer!.cancel();
+    }
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => IncomingCallScreen(
+            callerName: widget.callerName,
+            avatarPath: widget.avatarPath,
+            videoPath: widget.videoPath,
+          ),
+        ),
+      );
+    }
   }
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -80,11 +87,16 @@ class _BaitScreenState extends State<BaitScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: double.infinity,
-                aspectRatio: 16 / 9,
-                color: Colors.grey[900],
-                child: const Icon(Icons.play_circle_fill, size: 80, color: Colors.white70),
+              GestureDetector(
+                onTap: _jumpToCall, // Salto inmediato al pulsar Play
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Container(
+                    width: double.infinity,
+                    color: Colors.grey[900],
+                    child: const Icon(Icons.play_circle_fill, size: 80, color: Colors.white70),
+                  ),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.all(20.0),
@@ -158,35 +170,43 @@ class _BaitScreenState extends State<BaitScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "ÚLTIMA HORA",
+                  "ÚLTIMA HORA: VALENCIA",
                   style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  "Fenómeno inexplicable captado en vídeo: El suceso que conmociona a las redes sociales hoy mismo.",
+                  "¡PÁNICO EN VALENCIA! Captan un objeto no identificado sobrevolando el Nou Mestalla.",
                   style: TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.bold, height: 1.2),
                 ),
                 const SizedBox(height: 15),
                 Row(
                   children: [
-                    const Text("Por Redacción Mundo", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const Text("Por Redacción Levante", style: TextStyle(color: Colors.grey, fontSize: 12)),
                     const Spacer(),
-                    const Text("Hace 5 minutos", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const Text("Hace 2 minutos", style: TextStyle(color: Colors.grey, fontSize: 12)),
                   ],
                 ),
                 const Divider(height: 40),
-                Container(
-                  width: double.infinity,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    'assets/images/Ovni.png',
+                    width: double.infinity,
+                    height: 250,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: double.infinity,
+                        height: 200,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                      );
+                    },
                   ),
-                  child: const Icon(Icons.image, size: 50, color: Colors.grey),
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  "Fuentes locales confirman que el vídeo fue grabado hace escasas horas. Según los testigos presenciales, lo que empezó como una broma terminó en algo que nadie puede explicar. El vídeo completo se ha filtrado y puedes verlo a continuación...",
+                  "Vecinos de la zona de Benicalap han reportado hace escasos minutos el avistamiento de un objeto discoidal de grandes dimensiones suspendido sobre las obras del futuro estadio del Valencia CF. Las imágenes, captadas por un testigo directo, están colapsando las redes sociales. Según los expertos, el fenómeno es inexplicable...",
                   style: TextStyle(color: Colors.black87, fontSize: 16, height: 1.5),
                 ),
               ],
@@ -227,22 +247,25 @@ class _BaitScreenState extends State<BaitScreen> {
             ),
           ),
           const SizedBox(height: 40),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-            decoration: BoxDecoration(
-              color: Colors.amber,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5)),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text("RECLAMAR PREMIO", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
-                SizedBox(width: 10),
-                Icon(Icons.arrow_forward, color: Colors.black),
-              ],
+          GestureDetector(
+            onTap: _jumpToCall, // Salto inmediato al pulsar el botón de premio
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              decoration: BoxDecoration(
+                color: Colors.amber,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5)),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Text("RECLAMAR PREMIO", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+                  SizedBox(width: 10),
+                  Icon(Icons.arrow_forward, color: Colors.black),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 20),
