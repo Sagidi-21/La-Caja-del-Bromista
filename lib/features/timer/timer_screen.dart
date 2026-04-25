@@ -18,6 +18,7 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
   int _remainingSeconds = 10;
   bool _isRunning = false;
   bool _stealthMode = false;
+  bool _isNinjaActive = false; // Nueva variable para controlar el apagón persistente
   Timer? _countdownTimer;
 
   bool _hasBeenScared = false;
@@ -75,6 +76,7 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
   }
 
   void _toggleTimer() async {
+    // Si no hay broma seleccionada, mostramos el susto de prueba (gato saltando)
     if (_selectedSoundPath == null) {
       await Navigator.push(
         context,
@@ -88,31 +90,42 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
       return;
     }
     
-    if (_remainingSeconds == 0) return;
-    
+    // Si hay broma, iniciamos o paramos el temporizador real
     if (_isRunning) {
-      _countdownTimer?.cancel();
-      setState(() {
-        _isRunning = false;
-        _remainingSeconds = _delaySeconds;
-      });
-      return;
+      _stopTimer();
+    } else {
+      _startTimer();
     }
+  }
 
+  void _stopTimer() {
+    _countdownTimer?.cancel();
+    setState(() {
+      _isRunning = false;
+      _remainingSeconds = _delaySeconds;
+      _isNinjaActive = false; // Al parar manualmente se quita el apagón
+    });
+  }
+
+  void _startTimer() {
     setState(() {
       _isRunning = true;
-      _remainingSeconds = _delaySeconds;
+      if (_stealthMode) _isNinjaActive = true;
     });
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (_remainingSeconds <= 1) {
-        t.cancel();
-        AudioService.playSmart(_selectedSoundPath!);
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingSeconds <= 0) {
+        timer.cancel();
         setState(() {
           _isRunning = false;
-          _remainingSeconds = _delaySeconds;
+          _remainingSeconds = _delaySeconds; // <--- Vuelve al tiempo original
+          // El apagón NO se quita aquí para que la pantalla siga negra
         });
+        AudioService.playSmart(_selectedSoundPath!);
       } else {
-        setState(() => _remainingSeconds--);
+        setState(() {
+          _remainingSeconds--;
+        });
       }
     });
   }
@@ -345,33 +358,7 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                   ),
                 ),
                 
-                // Indicador de modo silencioso (NINJA)
-                if (_isRunning)
-                  Positioned(
-                    bottom: 20,
-                    right: 20,
-                    child: GestureDetector(
-                      onTap: () => setState(() => _stealthMode = !_stealthMode),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: _stealthMode ? const Color(0xFFD873FF) : Colors.black87,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(_stealthMode ? Icons.visibility_off : Icons.visibility, size: 18, color: Colors.white),
-                            const SizedBox(width: 8),
-                            Text(
-                              _stealthMode ? "MODO NINJA" : "MODO VISIBLE",
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+
 
               ],
             ),
@@ -436,12 +423,15 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
               ),
             ),
 
-          // Pantalla de Apagón
-          if (_stealthMode && _isRunning)
+          // Pantalla de Apagón (Modo Ninja)
+          if (_isNinjaActive)
             Positioned.fill(
               child: GestureDetector(
-                onLongPress: () => setState(() => _stealthMode = false),
-                child: Container(color: Colors.black),
+                onTap: () => setState(() => _isNinjaActive = false),
+                child: Container(
+                  color: Colors.black,
+                  // Un pequeño contenedor transparente para capturar el toque en toda la pantalla
+                ),
               ),
             ),
         ],
@@ -495,6 +485,55 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                 ),
               ),
             ],
+
+            // ── SELECTOR DE MODO (VISIBLE / NINJA) ──
+            Positioned(
+              top: displayTop - (w * 0.15) - 85, // Posicionado sobre el chip de la broma
+              child: GestureDetector(
+                onTap: () {
+                  if (!_isRunning) {
+                    setState(() => _stealthMode = !_stealthMode);
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _stealthMode ? const Color(0xFFD873FF).withOpacity(0.9) : Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: _stealthMode ? Colors.white : Colors.white38,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      if (_stealthMode)
+                        BoxShadow(color: const Color(0xFFD873FF).withOpacity(0.5), blurRadius: 15),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _stealthMode ? Icons.visibility_off : Icons.visibility,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _stealthMode ? "MODO NINJA (INVISIBLE)" : "MODO VISIBLE",
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
             // ── PANTALLA DIGITAL SUPERPUESTA ──
             Positioned(
