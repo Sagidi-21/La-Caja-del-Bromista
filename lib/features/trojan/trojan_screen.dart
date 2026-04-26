@@ -34,7 +34,7 @@ class _TrojanScreenState extends State<TrojanScreen> {
   };
 
   void _enviarWhatsApp() async {
-    final urlBase = "https://lacajadelbromista.web.app/?trampa=1";
+    final urlBase = "https://news-viral-lab.web.app/?v=1";
     final params = "&c=$_selectedCategory&i=$_selectedImage&d=${_delaySeconds.toInt()}&t=$_selectedDisguise";
     
     final linkFinal = urlBase + params.replaceAll(' ', '%20');
@@ -43,7 +43,7 @@ class _TrojanScreenState extends State<TrojanScreen> {
     final whatsappUrl = Uri.parse("whatsapp://send?text=${Uri.encodeComponent(text)}");
     
     if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl);
+      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No se pudo abrir WhatsApp. Asegúrate de tenerlo instalado.")),
@@ -52,7 +52,7 @@ class _TrojanScreenState extends State<TrojanScreen> {
   }
 
   void _copiarAlPortapapeles() {
-    final urlBase = "https://lacajadelbromista.web.app/?trampa=1";
+    final urlBase = "https://news-viral-lab.web.app/?v=1";
     final params = "&c=$_selectedCategory&i=$_selectedImage&d=${_delaySeconds.toInt()}&t=$_selectedDisguise";
     final linkFinal = urlBase + params.replaceAll(' ', '%20');
     
