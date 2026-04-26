@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:math';
 import 'fake_call_screen.dart';
 import 'incoming_call_screen.dart';
 import 'bait_screen.dart';
@@ -63,6 +64,18 @@ class _TrojanScreenState extends State<TrojanScreen> {
         ),
       );
     });
+  }
+
+  String _generateRandomPhone() {
+    final random = Random();
+    // Generar número español: +34 6XX XX XX XX
+    int prefix = 600 + random.nextInt(100); // 600-699
+    int p1 = random.nextInt(100);
+    int p2 = random.nextInt(100);
+    int p3 = random.nextInt(100);
+    
+    String f(int n) => n.toString().padLeft(2, '0');
+    return "+34 $prefix ${f(p1)} ${f(p2)} ${f(p3)}";
   }
 
   @override
@@ -318,7 +331,7 @@ class _TrojanScreenState extends State<TrojanScreen> {
                                       builder: (context) => BaitScreen(
                                         type: _selectedDisguise,
                                         duration: _delaySeconds,
-                                        callerName: _selectedCategory == 'Chicas' ? 'Amiga Trabajo' : 'Amigo Trabajo',
+                                        callerName: _generateRandomPhone(),
                                         avatarPath: 'assets/images/trampas/$catPath/$avatarName',
                                         videoPath: videoPath,
                                       ),
