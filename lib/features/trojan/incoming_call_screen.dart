@@ -23,6 +23,7 @@ class IncomingCallScreen extends StatefulWidget {
 class _IncomingCallScreenState extends State<IncomingCallScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   VideoPlayerController? _preloadedVideoController;
+  bool _isAccepted = false; // Bandera para saber si hemos aceptado la llamada
 
   @override
   void initState() {
@@ -53,7 +54,11 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   void dispose() {
     _audioPlayer.stop();
     _audioPlayer.dispose();
-    // No hacemos dispose del video aquí porque se lo pasaremos a la siguiente pantalla
+    
+    // Si NO hemos aceptado la llamada, tenemos que liberar el vídeo aquí
+    if (!_isAccepted) {
+      _preloadedVideoController?.dispose();
+    }
     super.dispose();
   }
 
@@ -176,13 +181,14 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
                                 color: Colors.green,
                                 onTap: () {
                                   _audioPlayer.stop();
+                                  setState(() => _isAccepted = true); // Marcamos como aceptada
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => FakeCallScreen(
                                         videoPath: widget.videoPath,
                                         callerName: widget.callerName,
-                                        preloadedController: _preloadedVideoController, // Pasamos el video ya listo
+                                        preloadedController: _preloadedVideoController,
                                       ),
                                     ),
                                   );

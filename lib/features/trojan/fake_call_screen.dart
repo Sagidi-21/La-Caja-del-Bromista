@@ -48,9 +48,8 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
 
   @override
   void dispose() {
-    if (widget.preloadedController == null) {
-      _controller.dispose();
-    }
+    _controller.pause(); // Detenemos el audio/video inmediatamente
+    _controller.dispose(); // Liberamos la memoria
     super.dispose();
   }
 
