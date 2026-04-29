@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../features/security/security_info_screen.dart';
 
 class SharedSidebar extends StatelessWidget {
   final int currentIndex;
@@ -19,6 +20,7 @@ class SharedSidebar extends StatelessWidget {
       {'icon': Icons.toys,      'label': 'LÁTIGO', 'index': 2},
       {'icon': Icons.cyclone,   'label': 'CAOS', 'index': 3},
       {'icon': Icons.mic,       'label': 'GRABACIÓN', 'index': 4},
+      {'icon': Icons.content_cut, 'label': 'CORTAPELO', 'index': 5},
     ];
 
     return Drawer(
@@ -106,6 +108,18 @@ class SharedSidebar extends StatelessWidget {
                   // Footer Actions
                   const Divider(color: Colors.white10),
                   const SizedBox(height: 16),
+                  _SidebarMenuItem(
+                    icon: Icons.gavel, 
+                    title: "SEGURIDAD Y LEGAL", 
+                    isSelected: false, 
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SecurityInfoScreen()),
+                      );
+                    }
+                  ),
+                  const SizedBox(height: 12),
                   _SidebarMenuItem(icon: Icons.settings, title: "AJUSTES", isSelected: false, onTap: () {}),
                   const SizedBox(height: 12),
                   

@@ -4,6 +4,7 @@ import '../features/timer/timer_screen.dart';
 import '../features/whip/whip_screen.dart';
 import '../features/chaos/chaos_screen.dart';
 import '../features/recorder/recorder_screen.dart';
+import '../features/clipper/clipper_screen.dart';
 import 'shared_sidebar.dart';
 
 class AppShell extends StatefulWidget {
@@ -22,6 +23,7 @@ class _AppShellState extends State<AppShell> {
     WhipScreen(),
     ChaosScreen(),
     RecorderScreen(),
+    ClipperScreen(),
   ];
 
   @override

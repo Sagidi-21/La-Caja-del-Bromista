@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import '../../core/audio/audio_service.dart';
 import 'joke_selection_screen.dart';
 import 'jumpscare_screen.dart';
 import '../trojan/trojan_screen.dart';
+import '../corta_pelo/corta_pelo_screen.dart';
 
 class TimerScreen extends StatefulWidget {
   const TimerScreen({super.key});
@@ -17,9 +19,12 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
   int _delaySeconds = 10;
   int _remainingSeconds = 10;
   bool _isRunning = false;
-  bool _stealthMode = false;
-  bool _isNinjaActive = false; // Nueva variable para controlar el apagón persistente
+  bool _isDynamicMode = false; // false = ESTÁTICA, true = DINÁMICA
+  bool _isNinjaActive = false;
   Timer? _countdownTimer;
+  StreamSubscription<AccelerometerEvent>? _accelSub;
+  double? _lastX, _lastY, _lastZ;
+  static const double _moveThreshold = 2.5;
 
   bool _hasBeenScared = false;
   late AnimationController _arrowController;
@@ -100,34 +105,53 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
 
   void _stopTimer() {
     _countdownTimer?.cancel();
+    _accelSub?.cancel();
+    _accelSub = null;
+    _lastX = null; _lastY = null; _lastZ = null;
     setState(() {
       _isRunning = false;
       _remainingSeconds = _delaySeconds;
-      _isNinjaActive = false; // Al parar manualmente se quita el apagón
+      _isNinjaActive = false;
     });
   }
 
   void _startTimer() {
     setState(() {
       _isRunning = true;
-      if (_stealthMode) _isNinjaActive = true;
+      _isNinjaActive = true; // Siempre pantalla negra al armar
     });
 
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds <= 0) {
-        timer.cancel();
-        setState(() {
-          _isRunning = false;
-          _remainingSeconds = _delaySeconds; // <--- Vuelve al tiempo original
-          // El apagón NO se quita aquí para que la pantalla siga negra
-        });
-        AudioService.playSmart(_selectedSoundPath!);
-      } else {
-        setState(() {
-          _remainingSeconds--;
-        });
-      }
-    });
+    if (_isDynamicMode) {
+      // MODO DINÁMICO: ignora temporizador, escucha acelerómetro
+      _accelSub = accelerometerEventStream().listen((AccelerometerEvent e) {
+        if (_lastX != null) {
+          final dx = (e.x - _lastX!).abs();
+          final dy = (e.y - _lastY!).abs();
+          final dz = (e.z - _lastZ!).abs();
+          if (dx > _moveThreshold || dy > _moveThreshold || dz > _moveThreshold) {
+            _accelSub?.cancel();
+            _accelSub = null;
+            setState(() { _isRunning = false; _remainingSeconds = _delaySeconds; });
+            AudioService.playSmart(_selectedSoundPath!);
+          }
+        }
+        _lastX = e.x; _lastY = e.y; _lastZ = e.z;
+      });
+    } else {
+      // MODO ESTÁTICO: cuenta regresiva normal
+      _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_remainingSeconds <= 0) {
+          timer.cancel();
+          setState(() {
+            _isRunning = false;
+            _remainingSeconds = _delaySeconds;
+          });
+          AudioService.playSmart(_selectedSoundPath!);
+        } else {
+          setState(() { _remainingSeconds--; });
+        }
+      });
+    }
   }
 
 
@@ -218,6 +242,7 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
   void dispose() {
     _arrowController.dispose();
     _countdownTimer?.cancel();
+    _accelSub?.cancel();
     super.dispose();
   }
 
@@ -426,6 +451,47 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
               ),
             ),
 
+          // ── BOTÓN ACCESO CORTA PELO (IZQUIERDA) ──
+          if (!_isRunning)
+            Positioned(
+              bottom: 12,
+              left: 8,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CortaPeloScreen()),
+                  );
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.redAccent.withOpacity(0.3),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/CortaPelo_icon.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.cut,
+                        color: Colors.redAccent,
+                        size: 35,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           // Pantalla de Apagón (Modo Ninja)
           if (_isNinjaActive)
             Positioned.fill(
@@ -490,51 +556,56 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
               ),
             ],
 
-            // ── SELECTOR DE MODO (VISIBLE / NINJA) ──
             Positioned(
-              top: displayTop - (w * 0.15) - 85, // Posicionado sobre el chip de la broma
-              child: GestureDetector(
-                onTap: () {
-                  if (!_isRunning) {
-                    setState(() => _stealthMode = !_stealthMode);
-                  }
-                },
-                behavior: HitTestBehavior.opaque,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _stealthMode ? const Color(0xFFD873FF).withOpacity(0.9) : Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _stealthMode ? Colors.white : Colors.white38,
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      if (_stealthMode)
-                        BoxShadow(color: const Color(0xFFD873FF).withOpacity(0.5), blurRadius: 15),
-                    ],
+              top: displayTop - (w * 0.15) - 85,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                decoration: BoxDecoration(
+                  color: _isDynamicMode ? const Color(0xFFD873FF).withOpacity(0.9) : Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: _isDynamicMode ? Colors.white : Colors.white38,
+                    width: 1.5,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _stealthMode ? Icons.visibility_off : Icons.visibility,
-                        size: 16,
-                        color: Colors.white,
+                  boxShadow: [
+                    _isDynamicMode 
+                      ? BoxShadow(color: const Color(0xFFD873FF).withOpacity(0.5), blurRadius: 15)
+                      : const BoxShadow(color: Colors.transparent, blurRadius: 15),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () {
+                      if (!_isRunning) {
+                        setState(() => _isDynamicMode = !_isDynamicMode);
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _isDynamicMode ? Icons.bolt : Icons.timer,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _isDynamicMode ? "BROMA DINÁMICA" : "BROMA ESTÁTICA",
+                            style: const TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _stealthMode ? "MODO NINJA (INVISIBLE)" : "MODO VISIBLE",
-                        style: const TextStyle(
-                          fontFamily: 'Manrope',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

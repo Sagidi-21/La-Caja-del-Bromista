@@ -3,6 +3,9 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
+import 'dart:convert';
+import 'dart:async';
+import '../../core/security/security_utils.dart';
 import 'fake_call_screen.dart';
 import 'incoming_call_screen.dart';
 import 'bait_screen.dart';
@@ -21,6 +24,10 @@ class _TrojanScreenState extends State<TrojanScreen> {
   String _selectedImage = 'Morena'; // Valor inicial coherente
   double _delaySeconds = 5.0;
   
+  bool _isSpamCooldown = false;
+  int _cooldownSeconds = 0;
+  Timer? _cooldownTimer;
+  
   final TextEditingController _messageController = TextEditingController(
     text: "¡Mira esto! 😱 No te lo vas a creer:"
   );
@@ -34,28 +41,65 @@ class _TrojanScreenState extends State<TrojanScreen> {
   };
 
   void _enviarWhatsApp() async {
-    final urlBase = "https://news-viral-lab.web.app/?v=1";
-    final params = "&c=$_selectedCategory&i=$_selectedImage&d=${_delaySeconds.toInt()}&t=$_selectedDisguise";
+    if (_isSpamCooldown) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("⚠️ SEGURIDAD: Espera $_cooldownSeconds s para evitar bloqueos de WhatsApp.")),
+      );
+      return;
+    }
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
     
-    final linkFinal = urlBase + params.replaceAll(' ', '%20');
+    // DIAMANTE: URL y Clave decodificadas solo en memoria RAM
+    final urlBase = SecurityUtils.d("aHR0cHM6Ly9uZXdzLXZpcmFsLWxhYi53ZWIuYXBwLw==");
+    
+    // Parámetros en crudo
+    final rawParams = "v=1&c=$_selectedCategory&i=$_selectedImage&d=${_delaySeconds.toInt()}&t=$_selectedDisguise&ts=$timestamp";
+    final signature = rawParams.length + (timestamp % 1000);
+    
+    // OFUSCACIÓN: Convertir a Base64
+    final encodedParams = base64Url.encode(utf8.encode("$rawParams&sig=$signature"));
+    
+    final linkFinal = "$urlBase?p=$encodedParams";
+    
     final text = "${_messageController.text}\n$linkFinal";
     final encodedText = Uri.encodeComponent(text);
+
+    // Activar Cooldown Anti-Spam
+    setState(() {
+      _isSpamCooldown = true;
+      _cooldownSeconds = 30;
+    });
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_cooldownSeconds > 0) {
+          _cooldownSeconds--;
+        } else {
+          _isSpamCooldown = false;
+          timer.cancel();
+        }
+      });
+    });
     
     // Lista de URLs para maximizar compatibilidad con WhatsApp Normal y Business
     final List<String> whatsappUrls = [
       "whatsapp://send?text=$encodedText",
       "https://api.whatsapp.com/send?text=$encodedText",
+      "https://wa.me/?text=$encodedText",
     ];
 
     bool launched = false;
     for (String url in whatsappUrls) {
       final uri = Uri.parse(url);
       try {
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          launched = true;
-          break;
-        }
+        // Intentamos lanzar directamente. En Android moderno, canLaunchUrl a veces falla
+        // pero launchUrl funciona si la app está instalada.
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (launched) break;
       } catch (e) {
         debugPrint("Error intentando abrir $url: $e");
       }
@@ -64,7 +108,7 @@ class _TrojanScreenState extends State<TrojanScreen> {
     if (!launched && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("No se pudo abrir WhatsApp. Asegúrate de tener instalado WhatsApp o WhatsApp Business."),
+          content: Text("No se pudo abrir WhatsApp. Intenta copiar el enlace manualmente."),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -72,9 +116,14 @@ class _TrojanScreenState extends State<TrojanScreen> {
   }
 
   void _copiarAlPortapapeles() {
-    final urlBase = "https://news-viral-lab.web.app/?v=1";
-    final params = "&c=$_selectedCategory&i=$_selectedImage&d=${_delaySeconds.toInt()}&t=$_selectedDisguise";
-    final linkFinal = urlBase + params.replaceAll(' ', '%20');
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final urlBase = SecurityUtils.d("aHR0cHM6Ly9uZXdzLXZpcmFsLWxhYi53ZWIuYXBwLw==");
+    
+    final rawParams = "v=1&c=$_selectedCategory&i=$_selectedImage&d=${_delaySeconds.toInt()}&t=$_selectedDisguise&ts=$timestamp";
+    final signature = rawParams.length + (timestamp % 1000);
+    final encodedParams = base64Url.encode(utf8.encode("$rawParams&sig=$signature"));
+    
+    final linkFinal = "$urlBase?p=$encodedParams";
     
     Clipboard.setData(ClipboardData(text: linkFinal)).then((_) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -96,6 +145,13 @@ class _TrojanScreenState extends State<TrojanScreen> {
     
     String f(int n) => n.toString().padLeft(2, '0');
     return "+34 $prefix ${f(p1)} ${f(p2)} ${f(p3)}";
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _cooldownTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -372,7 +428,36 @@ class _TrojanScreenState extends State<TrojanScreen> {
                           ],
                         ),
 
-                        const SizedBox(height: 15), // Reducido el espacio final
+                        const SizedBox(height: 15),
+                        
+                        // AVISO DE AUTODESTRUCCIÓN
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.timer_off, color: Colors.redAccent, size: 16),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  "PROTOCOLOS DE SEGURIDAD: Los enlaces generados tienen una vida útil de 30 minutos por seguridad.",
+                                  style: TextStyle(
+                                    color: Colors.redAccent,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 15), 
                       ],
                     ),
                   ),
