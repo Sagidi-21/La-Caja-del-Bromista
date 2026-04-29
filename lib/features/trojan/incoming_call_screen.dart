@@ -166,7 +166,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
                                 color: Colors.red,
                                 onTap: () {
                                   _audioPlayer.stop();
-                                  Navigator.pop(context);
+                                  Navigator.pop(context, false);
                                 },
                               ),
                               const SizedBox(height: 8),

@@ -86,7 +86,7 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.expand_more, color: Colors.white, size: 30),
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(context, false),
                       ),
                       const SizedBox(width: 10),
                       Column(
@@ -164,7 +164,7 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
                             _buildActionButton(Icons.videocam_off, Colors.white24),
                             _buildActionButton(Icons.mic_off, Colors.white24),
                             GestureDetector(
-                              onTap: () => Navigator.pop(context),
+                              onTap: () => Navigator.pop(context, false),
                               child: Container(
                                 padding: const EdgeInsets.all(15),
                                 decoration: const BoxDecoration(

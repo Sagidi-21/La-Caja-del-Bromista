@@ -34,12 +34,18 @@ class _BaitScreenState extends State<BaitScreen> {
     });
   }
 
-  void _jumpToCall() {
+  Future<void> _jumpToCall() async {
     if (_timer != null && _timer!.isActive) {
       _timer!.cancel();
     }
-    if (mounted) {
-      Navigator.pushReplacement(
+    
+    int retries = 0;
+    bool accepted = false;
+
+    while (retries < 3 && !accepted && mounted) {
+      // Lanzamos la pantalla de llamada y esperamos el resultado
+      // Usamos push en lugar de pushReplacement para poder capturar el retorno
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => IncomingCallScreen(
@@ -49,6 +55,24 @@ class _BaitScreenState extends State<BaitScreen> {
           ),
         ),
       );
+
+      // Si el resultado es true, es que la llamada se completó o aceptó (según lógica)
+      // En este caso, si result es null o false, es que colgaron/rechazaron
+      if (result == true) {
+        accepted = true;
+        break; 
+      }
+
+      retries++;
+      if (retries < 3 && mounted) {
+        // Esperar 5 segundos antes del siguiente intento
+        await Future.delayed(const Duration(seconds: 5));
+      }
+    }
+
+    // Una vez terminados los reintentos o aceptada, volvemos atrás (al TrojanScreen)
+    if (mounted) {
+      Navigator.pop(context);
     }
   }
 
