@@ -457,6 +457,7 @@ class _TrojanScreenState extends State<TrojanScreen> {
     final isSel = _selectedCategory == title;
     return GestureDetector(
       onTap: () => setState(() => _selectedCategory = title),
+      behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(

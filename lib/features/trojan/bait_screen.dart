@@ -113,6 +113,7 @@ class _BaitScreenState extends State<BaitScreen> {
             children: [
               GestureDetector(
                 onTap: _jumpToCall, // Salto inmediato al pulsar Play
+                behavior: HitTestBehavior.opaque,
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
                   child: Container(
@@ -273,6 +274,7 @@ class _BaitScreenState extends State<BaitScreen> {
           const SizedBox(height: 40),
           GestureDetector(
             onTap: _jumpToCall, // Salto inmediato al pulsar el botón de premio
+            behavior: HitTestBehavior.opaque,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               decoration: BoxDecoration(

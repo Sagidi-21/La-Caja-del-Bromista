@@ -214,6 +214,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   Widget _buildCallButton({required IconData icon, required Color color, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Container(
         width: 70,
         height: 70,

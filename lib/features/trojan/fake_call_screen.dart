@@ -165,6 +165,7 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
                             _buildActionButton(Icons.mic_off, Colors.white24),
                             GestureDetector(
                               onTap: () => Navigator.pop(context, false),
+                              behavior: HitTestBehavior.opaque,
                               child: Container(
                                 padding: const EdgeInsets.all(15),
                                 decoration: const BoxDecoration(
