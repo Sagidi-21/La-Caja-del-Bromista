@@ -39,14 +39,34 @@ class _TrojanScreenState extends State<TrojanScreen> {
     
     final linkFinal = urlBase + params.replaceAll(' ', '%20');
     final text = "${_messageController.text}\n$linkFinal";
+    final encodedText = Uri.encodeComponent(text);
     
-    final whatsappUrl = Uri.parse("whatsapp://send?text=${Uri.encodeComponent(text)}");
-    
-    if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-    } else {
+    // Lista de URLs para maximizar compatibilidad con WhatsApp Normal y Business
+    final List<String> whatsappUrls = [
+      "whatsapp://send?text=$encodedText",
+      "https://api.whatsapp.com/send?text=$encodedText",
+    ];
+
+    bool launched = false;
+    for (String url in whatsappUrls) {
+      final uri = Uri.parse(url);
+      try {
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          launched = true;
+          break;
+        }
+      } catch (e) {
+        debugPrint("Error intentando abrir $url: $e");
+      }
+    }
+
+    if (!launched && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No se pudo abrir WhatsApp. Asegúrate de tenerlo instalado.")),
+        const SnackBar(
+          content: Text("No se pudo abrir WhatsApp. Asegúrate de tener instalado WhatsApp o WhatsApp Business."),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     }
   }
