@@ -299,7 +299,8 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                             });
                           }
                         },
-                      child: Image.asset(
+                        behavior: HitTestBehavior.opaque,
+                        child: Image.asset(
                         'assets/images/Elige_tu_broma.png',
                         width: 250, 
                         fit: BoxFit.contain,
@@ -373,6 +374,7 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
               child: Center(
                 child: GestureDetector(
                   onTap: _toggleTimer,
+                  behavior: HitTestBehavior.opaque,
                   child: Image.asset(
                     'assets/images/Presiona_para_Armar.png',
                     width: 280, 
@@ -395,6 +397,7 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                     MaterialPageRoute(builder: (context) => const TrojanScreen()),
                   );
                 },
+                behavior: HitTestBehavior.opaque,
                 child: Container(
                   width: 60,  // <--- AJUSTA EL TAMAÑO AQUÍ (ANCHO)
                   height: 60, // <--- AJUSTA EL TAMAÑO AQUÍ (ALTO)
@@ -428,6 +431,7 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
             Positioned.fill(
               child: GestureDetector(
                 onTap: () => setState(() => _isNinjaActive = false),
+                behavior: HitTestBehavior.opaque,
                 child: Container(
                   color: Colors.black,
                   // Un pequeño contenedor transparente para capturar el toque en toda la pantalla
@@ -495,6 +499,7 @@ class _TimerScreenState extends State<TimerScreen> with SingleTickerProviderStat
                     setState(() => _stealthMode = !_stealthMode);
                   }
                 },
+                behavior: HitTestBehavior.opaque,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
